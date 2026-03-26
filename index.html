@@ -173,11 +173,28 @@
     <div id="dt-phase-question">
       <h2>Train a Decision Tree</h2>
       <p>A decision tree is an AI that classifies items by asking a chain of yes/no questions. Label as many items as you like, then build the tree when you're ready!</p>
-      <div class="modal-label">What question should the AI learn to answer?</div>
-      <input class="modal-input" id="dt-question-input"
-        placeholder='e.g. "Is this item dangerous?" or "Is this worth collecting?"'
-        onkeydown="if(event.key==='Enter')dtStartTraining()"/>
-      <p class="dt-phase-hint">You'll see items one at a time. Swipe or click YES/NO to label each one — then click <strong>Build Decision Tree</strong> whenever you think you've labeled enough!</p>
+      <div class="view-toggle" style="margin-bottom:18px;align-self:center">
+        <button class="toggle-btn active" id="dt-tab-question" onclick="dtSetMode('question')">Ask a Question</button>
+        <button class="toggle-btn" id="dt-tab-feature" onclick="dtSetMode('feature')">Use a Feature</button>
+      </div>
+      <!-- Mode: Ask a Question -->
+      <div id="dt-mode-question">
+        <div class="modal-label">What question should the AI learn to answer?</div>
+        <input class="modal-input" id="dt-question-input"
+          placeholder='e.g. "Is this item dangerous?" or "Is this worth collecting?"'
+          onkeydown="if(event.key==='Enter')dtStartTraining()"/>
+        <p class="dt-phase-hint">You'll see items one at a time. Swipe or click YES/NO to label each one — then click <strong>Build Decision Tree</strong> whenever you think you've labeled enough!</p>
+      </div>
+      <!-- Mode: Use a Feature -->
+      <div id="dt-mode-feature" class="hidden">
+        <div class="modal-label">Which feature should become the label?</div>
+        <select class="modal-input" id="dt-feature-select" onchange="dtFeatureSelectChanged()"></select>
+        <div id="dt-value-group" class="hidden">
+          <div class="modal-label">Which value means YES?</div>
+          <select class="modal-input" id="dt-value-select"></select>
+          <p class="dt-phase-hint">All items matching this value will be labeled YES automatically — you can still adjust them in the next step.</p>
+        </div>
+      </div>
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeDT()">Cancel</button>
         <button class="btn-primary" onclick="dtStartTraining()">Start Labeling →</button>
@@ -234,6 +251,7 @@
           <div class="dt-tree-q" id="dt-tree-question"></div>
         </div>
         <div class="dt-tree-actions">
+          <button class="btn-secondary" id="dt-math-toggle" onclick="toggleMathPanel()">Show Math</button>
           <button class="btn-secondary" onclick="openDecisionTree()">↺ Retrain</button>
           <button class="btn-secondary" onclick="closeDT()">Close</button>
         </div>
@@ -249,6 +267,7 @@
       <div class="dt-tree-note" id="dt-tree-note">
         Each split was chosen to best separate your YES from NO items. Follow any path top-to-bottom to classify a new item!
       </div>
+      <div id="dt-math-panel" class="dt-math-panel hidden"></div>
     </div>
 
   </div>

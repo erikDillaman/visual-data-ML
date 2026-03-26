@@ -11,11 +11,13 @@ let dt = {
   labels:        {},   // itemId -> true (yes) | false (no)
   currentIndex:  0,
   tree:          null,
+  showMath:      false,
 };
 
 let _dragStartX  = null;
 let _dragDelta   = 0;
 let _swiping     = false;  // debounce
+let _dtMode      = 'question'; // 'question' | 'feature'
 
 // ── Open / Close ──────────────────────────────────
 function openDecisionTree() {
@@ -26,6 +28,7 @@ function openDecisionTree() {
   dt.trainingItems = [...ITEMS].sort(() => Math.random() - 0.5);
 
   document.getElementById('dt-question-input').value = '';
+  dtSetMode('question');
   _showPhase('question');
   document.getElementById('dt-modal').classList.remove('hidden');
 }
@@ -79,10 +82,71 @@ function _dtKey(e) {
 }
 
 // ── Phase: Question ───────────────────────────────
+function dtSetMode(mode) {
+  _dtMode = mode;
+  document.getElementById('dt-mode-question').classList.toggle('hidden', mode !== 'question');
+  document.getElementById('dt-mode-feature').classList.toggle('hidden', mode !== 'feature');
+  document.getElementById('dt-tab-question').classList.toggle('active', mode === 'question');
+  document.getElementById('dt-tab-feature').classList.toggle('active', mode === 'feature');
+  if (mode === 'feature') _populateFeatureSelect();
+}
+
+function _populateFeatureSelect() {
+  const sel = document.getElementById('dt-feature-select');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Select a feature —</option>';
+  _FEATURES.forEach(function(f) {
+    const opt = document.createElement('option');
+    opt.value = f;
+    opt.textContent = _FEAT_LABEL[f] || f;
+    sel.appendChild(opt);
+  });
+  if (typeof customFeatures !== 'undefined') {
+    customFeatures.forEach(function(cf) {
+      const opt = document.createElement('option');
+      opt.value = cf.key;
+      opt.textContent = cf.label || cf.key;
+      sel.appendChild(opt);
+    });
+  }
+  sel.value = prev;
+  dtFeatureSelectChanged();
+}
+
+function dtFeatureSelectChanged() {
+  const feat = document.getElementById('dt-feature-select').value;
+  const valGroup = document.getElementById('dt-value-group');
+  if (!feat) { valGroup.classList.add('hidden'); return; }
+  const values = Array.from(new Set(ITEMS.map(function(item) { return _fval(item, feat); })))
+    .filter(function(v) { return v != null; }).sort();
+  const valSel = document.getElementById('dt-value-select');
+  valSel.innerHTML = '<option value="">— Select a value —</option>';
+  values.forEach(function(v) {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    valSel.appendChild(opt);
+  });
+  valGroup.classList.remove('hidden');
+}
+
 function dtStartTraining() {
-  const q = document.getElementById('dt-question-input').value.trim();
-  if (!q) { alert('Please enter a question for the AI to answer!'); return; }
-  dt.question = q;
+  if (_dtMode === 'feature') {
+    const feat = document.getElementById('dt-feature-select').value;
+    const val  = document.getElementById('dt-value-select').value;
+    if (!feat) { alert('Please select a feature!'); return; }
+    if (!val)  { alert('Please select a value for YES!'); return; }
+    const featLabel = _FEAT_LABEL[feat] || feat;
+    dt.question = featLabel + ': ' + val + '?';
+    dt.labels = {};
+    ITEMS.forEach(function(item) {
+      dt.labels[item.id] = String(_fval(item, feat)) === String(val);
+    });
+  } else {
+    const q = document.getElementById('dt-question-input').value.trim();
+    if (!q) { alert('Please enter a question for the AI to answer!'); return; }
+    dt.question = q;
+  }
   _showPhase('swipe');
 }
 
@@ -270,41 +334,57 @@ function _fval(item, feat) {
   return cf ? (cf.values[item.id] || cf.categories[0]) : null;
 }
 
-function _entropy(items) {
+// Gini impurity: 0 = perfectly pure, 0.5 = maximally mixed (50/50)
+function _gini(items) {
   if (!items.length) return 0;
   const yes = items.filter(function(i) { return i._label; }).length;
   const p   = yes / items.length;
-  if (p <= 0 || p >= 1) return 0;
-  return -(p * Math.log2(p)) - ((1 - p) * Math.log2(1 - p));
+  return 1 - p * p - (1 - p) * (1 - p);
 }
 
 function _bestSplit(items, features) {
-  const baseE = _entropy(items);
-  let best = { gain: -1, feature: null, splitVal: null, isNumeric: false };
+  const parentGini = _gini(items);
+  let best = { gain: -1, feature: null, splitVal: null, isNumeric: false, math: null };
 
   features.forEach(function(feat) {
     if (feat === 'value') {
       const vals = Array.from(new Set(items.map(function(i) { return i.value; }))).sort(function(a, b) { return a - b; });
       for (let k = 0; k < vals.length - 1; k++) {
-        const thr   = (vals[k] + vals[k + 1]) / 2;
-        const left  = items.filter(function(i) { return i.value <= thr; });
-        const right = items.filter(function(i) { return i.value > thr; });
+        const thr    = (vals[k] + vals[k + 1]) / 2;
+        const left   = items.filter(function(i) { return i.value <= thr; });
+        const right  = items.filter(function(i) { return i.value > thr; });
         if (!left.length || !right.length) continue;
-        const gain  = baseE
-          - (left.length / items.length) * _entropy(left)
-          - (right.length / items.length) * _entropy(right);
-        if (gain > best.gain) best = { gain: gain, feature: feat, splitVal: thr, isNumeric: true };
+        const leftG  = _gini(left);
+        const rightG = _gini(right);
+        const totalG = (left.length / items.length) * leftG + (right.length / items.length) * rightG;
+        const gain   = parentGini - totalG;
+        if (gain > best.gain) {
+          best = { gain: gain, feature: feat, splitVal: thr, isNumeric: true,
+                   math: { parentGini: parentGini, leftGini: leftG, rightGini: rightG,
+                           totalGini: totalG, leftN: left.length, rightN: right.length,
+                           totalN: items.length,
+                           leftYes: left.filter(function(i){return i._label;}).length,
+                           rightYes: right.filter(function(i){return i._label;}).length } };
+        }
       }
     } else {
       const unique = Array.from(new Set(items.map(function(i) { return _fval(i, feat); })));
       unique.forEach(function(v) {
-        const left  = items.filter(function(i) { return _fval(i, feat) === v; });
-        const right = items.filter(function(i) { return _fval(i, feat) !== v; });
+        const left   = items.filter(function(i) { return _fval(i, feat) === v; });
+        const right  = items.filter(function(i) { return _fval(i, feat) !== v; });
         if (!left.length || !right.length) return;
-        const gain  = baseE
-          - (left.length / items.length) * _entropy(left)
-          - (right.length / items.length) * _entropy(right);
-        if (gain > best.gain) best = { gain: gain, feature: feat, splitVal: v, isNumeric: false };
+        const leftG  = _gini(left);
+        const rightG = _gini(right);
+        const totalG = (left.length / items.length) * leftG + (right.length / items.length) * rightG;
+        const gain   = parentGini - totalG;
+        if (gain > best.gain) {
+          best = { gain: gain, feature: feat, splitVal: v, isNumeric: false,
+                   math: { parentGini: parentGini, leftGini: leftG, rightGini: rightG,
+                           totalGini: totalG, leftN: left.length, rightN: right.length,
+                           totalN: items.length,
+                           leftYes: left.filter(function(i){return i._label;}).length,
+                           rightYes: right.filter(function(i){return i._label;}).length } };
+        }
       });
     }
   });
@@ -345,6 +425,7 @@ function _buildDTree(items, features, depth, maxDepth) {
     condition: condition,
     count:     { yes: yes, no: no },
     items:     items,
+    splitMath: best.math,
     left:      _buildDTree(leftItems,  features, depth + 1, maxDepth),
     right:     _buildDTree(rightItems, features, depth + 1, maxDepth),
   };
@@ -375,6 +456,19 @@ function _treeDepth(node) {
 }
 
 function _renderTree() {
+  // Run Gini tests each time a tree is built (results go to browser console)
+  _runGiniTests();
+
+  // Reset math panel state
+  dt.showMath = false;
+  const mathToggleBtn = document.getElementById('dt-math-toggle');
+  if (mathToggleBtn) {
+    mathToggleBtn.classList.remove('active');
+    mathToggleBtn.textContent = 'Show Math';
+  }
+  const mathPanel = document.getElementById('dt-math-panel');
+  if (mathPanel) mathPanel.classList.add('hidden');
+
   document.getElementById('dt-tree-question').textContent = '\u201c' + dt.question + '\u201d';
 
   // Check edge case: all same label among labeled items
@@ -550,6 +644,159 @@ function _renderTree() {
   svg.setAttribute('height',  svgH);
   svg.setAttribute('viewBox', '0 0 ' + svgW + ' ' + svgH);
   svg.innerHTML = edgesSVG + nodesSVG;
+}
+
+// ── Gini Tests ────────────────────────────────────
+function _runGiniTests() {
+  const results = [];
+
+  function assert(label, actual, expected, tol) {
+    tol = tol == null ? 1e-9 : tol;
+    const pass = Math.abs(actual - expected) <= tol;
+    results.push({ label: label, pass: pass, actual: actual, expected: expected });
+    return pass;
+  }
+
+  // Pure sets
+  const pureYes = [{ _label: true }, { _label: true }, { _label: true }];
+  assert('Gini(all YES) = 0', _gini(pureYes), 0);
+
+  const pureNo = [{ _label: false }, { _label: false }];
+  assert('Gini(all NO) = 0', _gini(pureNo), 0);
+
+  // Empty set
+  assert('Gini([]) = 0', _gini([]), 0);
+
+  // 50/50 split — maximum impurity = 0.5
+  const half = [{ _label: true }, { _label: false }];
+  assert('Gini(1Y 1N) = 0.5', _gini(half), 0.5, 1e-9);
+
+  // 3Y 1N: p=0.75, Gini = 1 - 0.75^2 - 0.25^2 = 0.375
+  const threeOne = [{ _label: true }, { _label: true }, { _label: true }, { _label: false }];
+  assert('Gini(3Y 1N) = 0.375', _gini(threeOne), 0.375, 1e-9);
+
+  // Total Weighted Gini:
+  //   left  = [Y, Y, N] → p=2/3, Gini = 1 - 4/9 - 1/9 = 4/9 ≈ 0.4444
+  //   right = [N, N]    → Gini = 0
+  //   total = (3/5)×(4/9) + (2/5)×0 = 4/15 ≈ 0.2667
+  const left  = [{ _label: true  }, { _label: true  }, { _label: false }];
+  const right = [{ _label: false }, { _label: false }];
+  const n     = left.length + right.length;
+  const totalG = (left.length / n) * _gini(left) + (right.length / n) * _gini(right);
+  assert('Total Weighted Gini([2Y1N],[2N]) = 4/15', totalG, 4 / 15, 1e-9);
+
+  // Gini gain
+  const parent = left.concat(right);
+  const gain   = _gini(parent) - totalG;
+  // parent = [Y,Y,N,N,N]: p=2/5=0.4, Gini = 1 - 0.16 - 0.36 = 0.48
+  // gain = 0.48 - 4/15 ≈ 0.2133
+  assert('Gini Gain([2Y1N],[2N]) ≈ 0.2133', gain, 0.48 - 4 / 15, 1e-9);
+
+  const passed = results.filter(function(r) { return r.pass; }).length;
+  const total  = results.length;
+
+  console.group('Gini Impurity Tests');
+  results.forEach(function(r) {
+    const icon = r.pass ? '✓' : '✗';
+    const msg  = icon + ' ' + r.label + ' → got ' + r.actual.toFixed(6) + ', expected ' + r.expected.toFixed(6);
+    if (r.pass) { console.log(msg); } else { console.warn(msg); }
+  });
+  console.log(passed + '/' + total + ' tests passed');
+  console.groupEnd();
+
+  return { passed: passed, total: total, results: results };
+}
+
+// ── Math Toggle ───────────────────────────────────
+function toggleMathPanel() {
+  dt.showMath = !dt.showMath;
+  const btn   = document.getElementById('dt-math-toggle');
+  const panel = document.getElementById('dt-math-panel');
+  if (dt.showMath) {
+    btn.classList.add('active');
+    btn.textContent = 'Hide Math';
+    _renderMathPanel();
+    panel.classList.remove('hidden');
+  } else {
+    btn.classList.remove('active');
+    btn.textContent = 'Show Math';
+    panel.classList.add('hidden');
+  }
+}
+
+function _renderMathPanel() {
+  const panel = document.getElementById('dt-math-panel');
+  if (!dt.tree) { panel.innerHTML = ''; return; }
+
+  let html = '<h3 class="math-panel-title">Gini Impurity — How Each Split Was Chosen</h3>';
+  html += '<p class="math-panel-intro">At each split, the AI tries every possible question and picks the one that lowers the Total Weighted Gini Impurity the most. A Gini of 0 means a node is perfectly pure (all YES or all NO). A Gini of 0.5 means it\'s a 50/50 mix.</p>';
+
+  let splitNum = 0;
+
+  function walkNode(node, path) {
+    if (node.isLeaf || !node.splitMath) return;
+    splitNum++;
+    const m   = node.splitMath;
+    const n   = m.totalN;
+    const lno = m.leftN  - m.leftYes;
+    const rno = m.rightN - m.rightYes;
+
+    html +=
+      '<div class="math-split-block">' +
+        '<div class="math-split-header">' +
+          '<span class="math-split-num">Split ' + splitNum + '</span>' +
+          '<span class="math-split-cond">' + _esc(node.condition) + '?</span>' +
+          '<span class="math-split-path">' + _esc(path) + '</span>' +
+        '</div>' +
+        '<div class="math-row">' +
+          '<span class="math-label">Parent node</span>' +
+          '<span class="math-formula">' +
+            node.count.yes + '\u2713 ' + node.count.no + '\u2717 of ' + n + ' items' +
+            ' &nbsp;&rarr;&nbsp; ' +
+            'Gini = 1 \u2212 (' + node.count.yes + '/' + n + ')\u00b2 \u2212 (' + node.count.no + '/' + n + ')\u00b2' +
+            ' = <strong>' + m.parentGini.toFixed(4) + '</strong>' +
+          '</span>' +
+        '</div>' +
+        '<div class="math-row math-row-yes">' +
+          '<span class="math-label">YES branch</span>' +
+          '<span class="math-formula">' +
+            m.leftYes + '\u2713 ' + lno + '\u2717 of ' + m.leftN + ' items' +
+            ' &nbsp;&rarr;&nbsp; ' +
+            'Gini = <strong>' + m.leftGini.toFixed(4) + '</strong>' +
+          '</span>' +
+        '</div>' +
+        '<div class="math-row math-row-no">' +
+          '<span class="math-label">NO branch</span>' +
+          '<span class="math-formula">' +
+            m.rightYes + '\u2713 ' + rno + '\u2717 of ' + m.rightN + ' items' +
+            ' &nbsp;&rarr;&nbsp; ' +
+            'Gini = <strong>' + m.rightGini.toFixed(4) + '</strong>' +
+          '</span>' +
+        '</div>' +
+        '<div class="math-row math-row-total">' +
+          '<span class="math-label">Total Weighted Gini</span>' +
+          '<span class="math-formula">' +
+            '(' + m.leftN + '/' + n + ') \u00d7 ' + m.leftGini.toFixed(4) +
+            ' + (' + m.rightN + '/' + n + ') \u00d7 ' + m.rightGini.toFixed(4) +
+            ' = <strong>' + m.totalGini.toFixed(4) + '</strong>' +
+          '</span>' +
+        '</div>' +
+        '<div class="math-row math-row-gain">' +
+          '<span class="math-label">Gini Gain</span>' +
+          '<span class="math-formula">' +
+            m.parentGini.toFixed(4) + ' \u2212 ' + m.totalGini.toFixed(4) +
+            ' = <strong>' + (m.parentGini - m.totalGini).toFixed(4) + '</strong>' +
+            ' <em>(higher = better split)</em>' +
+          '</span>' +
+        '</div>' +
+      '</div>';
+
+    walkNode(node.left,  path + ' \u2192 YES');
+    walkNode(node.right, path + ' \u2192 NO');
+  }
+
+  walkNode(dt.tree, 'Root');
+  panel.innerHTML = html;
 }
 
 // ── Utility ───────────────────────────────────────
