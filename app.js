@@ -1082,7 +1082,7 @@ function toggleCard(evt, cardEl) {
 function updateSectionLabel() {
   const count = 7 + customFeatures.length;
   const lbl = document.getElementById('section-label');
-  if (lbl) lbl.textContent = `10 Items \u2022 ${count} Features Each \u2022 Click a card to expand`;
+  if (lbl) lbl.textContent = `Click a card to expand`;
 }
 
 // ══════════════════════════════════════════════════

@@ -162,6 +162,7 @@ main {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
+  align-items: start;
 }
 
 .item-card {
@@ -228,7 +229,7 @@ main {
   color: var(--text-dim);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-top: -6px;
+  margin-top: -2px;
 }
 
 .card-features {
@@ -558,6 +559,8 @@ footer {
 }
 .modal-input:focus { border-color: #a855f7; }
 .modal-input::placeholder { color: var(--text-dim); }
+select.modal-input { background: #1a1a3a; cursor: pointer; }
+select.modal-input option { background: #1a1a3a; color: var(--text); }
 
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
@@ -1132,6 +1135,94 @@ footer {
   letter-spacing: 0.04em;
   margin-top: 5px;
 }
+
+/* ── MATH TOGGLE BUTTON (active state) ── */
+#dt-math-toggle.active {
+  background: rgba(124,58,237,0.22);
+  border-color: #7c3aed;
+  color: #c084fc;
+}
+
+/* ── MATH PANEL ── */
+.dt-math-panel {
+  margin-top: 18px;
+  padding: 20px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(124,58,237,0.28);
+  border-radius: 14px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+.math-panel-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #c084fc;
+  margin-bottom: 8px;
+}
+.math-panel-intro {
+  color: var(--text-dim);
+  margin-bottom: 20px;
+  line-height: 1.55;
+}
+.math-split-block {
+  background: rgba(124,58,237,0.07);
+  border: 1px solid rgba(124,58,237,0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.math-split-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.math-split-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.math-split-cond {
+  font-weight: 700;
+  color: #e8e8f0;
+  font-size: 0.88rem;
+}
+.math-split-path {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-left: auto;
+  white-space: nowrap;
+}
+.math-row {
+  display: flex;
+  gap: 12px;
+  padding: 5px 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.math-label {
+  min-width: 140px;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+.math-formula {
+  color: #e8e8f0;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.78rem;
+}
+.math-formula strong { color: #c084fc; }
+.math-formula em     { color: var(--text-dim); font-style: normal; }
+.math-row-yes .math-label { color: #4ade80; }
+.math-row-no  .math-label { color: #f87171; }
+.math-row-total .math-label { color: #fbbf24; }
+.math-row-gain  .math-label { color: #60a5fa; }
 
 @media (max-width: 600px) {
   header { padding: 14px 16px; flex-wrap: wrap; }
