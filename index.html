@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Makes AI — Fantasy Item Explorer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <!-- Logo gem SVG -->
+    <svg class="logo-gem" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="19,2 36,12 36,26 19,36 2,26 2,12" fill="url(#lgm)" opacity="0.9"/>
+      <polygon points="19,2 36,12 19,18" fill="rgba(255,255,255,0.15)"/>
+      <polygon points="19,2 2,12 19,18" fill="rgba(255,255,255,0.08)"/>
+      <defs>
+        <linearGradient id="lgm" x1="2" y1="2" x2="36" y2="36">
+          <stop offset="0%" stop-color="#c084fc"/>
+          <stop offset="100%" stop-color="#6d28d9"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="header-title">
+      <h1>Fantasy Item Explorer</h1>
+      <p>Data Makes AI &mdash; Middle School Edition</p>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <button class="dt-header-btn" onclick="openDecisionTree()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="1.8" r="1.5" fill="currentColor"/>
+        <line x1="7" y1="3.3" x2="3.5" y2="7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="7" y1="3.3" x2="10.5" y2="7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <circle cx="3.2" cy="8.2" r="1.5" fill="currentColor"/>
+        <circle cx="10.8" cy="8.2" r="1.5" fill="currentColor"/>
+        <line x1="2.2" y1="9.7" x2="1" y2="13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="4.2" y1="9.7" x2="5.4" y2="13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="9.8" y1="9.7" x2="8.6" y2="13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="11.8" y1="9.7" x2="13" y2="13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Decision Tree
+    </button>
+    <div class="view-toggle">
+      <button class="toggle-btn active" id="btn-card" onclick="setView('card')" aria-label="Card View">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <rect x="1" y="1" width="5.5" height="5.5" rx="1.5" fill="currentColor"/>
+          <rect x="8.5" y="1" width="5.5" height="5.5" rx="1.5" fill="currentColor"/>
+          <rect x="1" y="8.5" width="5.5" height="5.5" rx="1.5" fill="currentColor"/>
+          <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.5" fill="currentColor"/>
+        </svg>
+        Cards
+      </button>
+      <button class="toggle-btn" id="btn-table" onclick="setView('table')" aria-label="Table View">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <rect x="1" y="1" width="13" height="3" rx="1" fill="currentColor" opacity="0.9"/>
+          <rect x="1" y="6" width="13" height="2" rx="1" fill="currentColor" opacity="0.7"/>
+          <rect x="1" y="10" width="13" height="2" rx="1" fill="currentColor" opacity="0.5"/>
+        </svg>
+        Table
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══════════════════ CARD VIEW ══════════════════ -->
+  <div class="view active" id="view-card">
+    <div class="add-feature-bar">
+      <button class="add-feature-btn" onclick="openAddFeature()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="7" y1="1" x2="7" y2="13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        Add Feature
+      </button>
+    </div>
+    <div class="section-label" id="section-label">40 Items &bull; 3 Features Each &bull; Click a card to expand</div>
+    <div class="card-grid" id="card-grid"></div>
+  </div>
+
+  <!-- ══════════════════ TABLE VIEW ══════════════════ -->
+  <div class="view" id="view-table">
+    <div class="section-label">Click any column header to sort &bull; 40 Items &bull; 3 Features</div>
+    <div class="table-wrapper">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)" data-col="0">Item <span class="sort-indicator">⇅</span></th>
+            <th onclick="sortTable(1)" data-col="1">Rarity <span class="sort-indicator">⇅</span></th>
+            <th onclick="sortTable(2)" data-col="2">Value <span class="sort-indicator">⇅</span></th>
+            <th onclick="sortTable(3)" data-col="3">Element <span class="sort-indicator">⇅</span></th>
+            <th onclick="sortTable(4)" data-col="4">Type <span class="sort-indicator">⇅</span></th>
+            <th onclick="sortTable(5)" data-col="5">Weight <span class="sort-indicator">⇅</span></th>
+            <th onclick="sortTable(6)" data-col="6">Danger <span class="sort-indicator">⇅</span></th>
+            <th onclick="sortTable(7)" data-col="7">Usable <span class="sort-indicator">⇅</span></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════ FEATURE MODAL ══════════════════ -->
+  <div id="feature-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeFeatureModal()">✕</button>
+
+      <!-- Step 1: name the feature -->
+      <div id="modal-step1">
+        <h2>Add a New Feature</h2>
+        <p>Choose a feature to track for every item — this adds a new category of data to your dataset!</p>
+        <div class="modal-label">Suggested Features</div>
+        <div class="chip-grid" id="feature-chips">
+          <button class="chip" onclick="selectFeatureSuggestion('Crafting Use',this)">⚒ Crafting Use</button>
+          <button class="chip" onclick="selectFeatureSuggestion('Found In',this)">📍 Found In</button>
+          <button class="chip" onclick="selectFeatureSuggestion('Origin',this)">🌀 Origin</button>
+          <button class="chip" onclick="selectFeatureSuggestion('Combat Effect',this)">⚔ Combat Effect</button>
+          <button class="chip" onclick="selectFeatureSuggestion('Season Found',this)">🍂 Season Found</button>
+        </div>
+        <div class="modal-label">Or name your own</div>
+        <input class="modal-input" id="feature-name-input" placeholder="e.g. Trade Route, Power Level…" oninput="modalFeatureName=this.value"/>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeFeatureModal()">Cancel</button>
+          <button class="btn-primary" onclick="proceedToCategories()">Continue →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: choose categories -->
+      <div id="modal-step2" class="hidden-step">
+        <h2>Choose Categories</h2>
+        <p>What are the possible values for <strong id="modal-feature-name-display"></strong>? Pick a recommended set or choose another option.</p>
+        <div class="modal-label">Recommended Category Sets</div>
+        <div id="category-presets"></div>
+        <div class="modal-actions" style="margin-top:8px">
+          <button class="btn-secondary" onclick="backToStep1()">← Back</button>
+          <button class="btn-primary" onclick="confirmAndInfer()">✨ Accept &amp; Infer Values</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Data Makes AI &mdash; Every item is defined by its features. That's how AI learns to tell them apart.
+</footer>
+
+<!-- ══════════════════ DECISION TREE MODAL ══════════════════ -->
+<div id="dt-modal" class="modal-overlay hidden">
+  <div class="dt-modal-box">
+    <button class="modal-close" onclick="closeDT()">✕</button>
+
+    <!-- Stepper -->
+    <div class="dt-stepper">
+      <div class="dt-step" id="dt-step-1">
+        <div class="dt-step-num">1</div>
+        <div class="dt-step-label">Your Question</div>
+      </div>
+      <div class="dt-step-connector"></div>
+      <div class="dt-step" id="dt-step-2">
+        <div class="dt-step-num">2</div>
+        <div class="dt-step-label">Label Items</div>
+      </div>
+      <div class="dt-step-connector"></div>
+      <div class="dt-step" id="dt-step-3">
+        <div class="dt-step-num">3</div>
+        <div class="dt-step-label">Decision Tree</div>
+      </div>
+    </div>
+
+    <!-- Phase: Question -->
+    <div id="dt-phase-question">
+      <h2>Train a Decision Tree</h2>
+      <p>A decision tree is an AI that classifies items by asking a chain of yes/no questions. Label as many items as you like, then build the tree when you're ready!</p>
+      <div class="view-toggle" style="margin-bottom:18px;align-self:center">
+        <button class="toggle-btn active" id="dt-tab-question" onclick="dtSetMode('question')">Ask a Question</button>
+        <button class="toggle-btn" id="dt-tab-feature" onclick="dtSetMode('feature')">Use a Feature</button>
+      </div>
+      <!-- Mode: Ask a Question -->
+      <div id="dt-mode-question">
+        <div class="modal-label">What question should the AI learn to answer?</div>
+        <input class="modal-input" id="dt-question-input"
+          placeholder='e.g. "Is this item dangerous?" or "Is this worth collecting?"'
+          onkeydown="if(event.key==='Enter')dtStartTraining()"/>
+        <p class="dt-phase-hint">You'll see items one at a time. Swipe or click YES/NO to label each one — then click <strong>Build Decision Tree</strong> whenever you think you've labeled enough!</p>
+      </div>
+      <!-- Mode: Use a Feature -->
+      <div id="dt-mode-feature" class="hidden">
+        <div class="modal-label">Which feature should become the label?</div>
+        <select class="modal-input" id="dt-feature-select" onchange="dtFeatureSelectChanged()"></select>
+        <div id="dt-value-group" class="hidden">
+          <div class="modal-label">Which value means YES?</div>
+          <select class="modal-input" id="dt-value-select"></select>
+          <p class="dt-phase-hint">All items matching this value will be labeled YES automatically — you can still adjust them in the next step.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeDT()">Cancel</button>
+        <button class="btn-primary" onclick="dtStartTraining()">Start Labeling →</button>
+      </div>
+    </div>
+
+    <!-- Phase: Swipe -->
+    <div id="dt-phase-swipe" class="hidden">
+      <div class="dt-topbar">
+        <div class="dt-swipe-q" id="dt-swipe-question"></div>
+        <div class="dt-progress-group">
+          <span class="dt-progress-label" id="dt-progress-label">0 labeled</span>
+        </div>
+      </div>
+      <p class="dt-swipe-instruction">Drag the card or use the buttons — is this a good example?</p>
+      <div class="dt-swipe-arena">
+        <div class="dt-arena-hint dt-hint-no">← NO</div>
+        <div class="dt-card-wrapper">
+          <div class="dt-yes-ind" id="dt-yes-ind">YES ✓</div>
+          <div class="dt-no-ind" id="dt-no-ind">✗ NO</div>
+          <div class="dt-swipe-card" id="dt-swipe-card"></div>
+        </div>
+        <div class="dt-arena-hint dt-hint-yes">YES →</div>
+      </div>
+      <div class="dt-swipe-btns">
+        <button class="dt-btn-no" onclick="dtSwipe(false)">✗  Not a good example</button>
+        <button class="dt-btn-yes" onclick="dtSwipe(true)">Good example  ✓</button>
+      </div>
+      <div class="dt-kb-hint">← → arrow keys also work</div>
+      <div class="dt-build-row">
+        <div class="dt-label-counts" id="dt-label-counts">
+          <span class="dt-count-yes" id="dt-count-yes">0 YES</span> · <span class="dt-count-no" id="dt-count-no">0 NO</span>
+        </div>
+        <button id="dt-build-btn" class="btn-primary dt-build-btn" onclick="dtBuildTree()" disabled>Build Decision Tree →</button>
+      </div>
+      <div class="dt-build-hint" id="dt-build-hint">Label at least one YES and one NO to build</div>
+    </div>
+
+    <!-- Phase: Building -->
+    <div id="dt-phase-building" class="hidden">
+      <div class="dt-building-wrap">
+        <div class="dt-build-emoji">🌳</div>
+        <h2>Building your Decision Tree…</h2>
+        <p>Analyzing your labels to find the best decision splits…</p>
+        <div class="dt-build-track"><div class="dt-build-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- Phase: Tree -->
+    <div id="dt-phase-tree" class="hidden">
+      <div class="dt-tree-topbar">
+        <div>
+          <h2>Your Decision Tree</h2>
+          <div class="dt-tree-q" id="dt-tree-question"></div>
+        </div>
+        <div class="dt-tree-actions">
+          <button class="btn-secondary" id="dt-math-toggle" onclick="toggleMathPanel()">Show Math</button>
+          <button class="btn-secondary" onclick="openDecisionTree()">↺ Retrain</button>
+          <button class="btn-secondary" onclick="closeDT()">Close</button>
+        </div>
+      </div>
+      <div class="dt-tree-legend">
+        <span class="dt-leg-split">◇ Decision Split — follow YES left, NO right</span>
+        <span class="dt-leg-yes">✓ YES Leaf</span>
+        <span class="dt-leg-no">✗ NO Leaf</span>
+      </div>
+      <div class="dt-tree-scroll" id="dt-tree-scroll">
+        <svg id="dt-tree-svg" xmlns="http://www.w3.org/2000/svg" style="display:block;"></svg>
+      </div>
+      <div class="dt-tree-note" id="dt-tree-note">
+        Each split was chosen to best separate your YES from NO items. Follow any path top-to-bottom to classify a new item!
+      </div>
+      <div id="dt-math-panel" class="dt-math-panel hidden"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="dtree.js"></script>
+</body>
+</html>
