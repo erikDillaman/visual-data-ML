@@ -1,17 +1,19 @@
 // ══════════════════════════════════════════════════
 //  DECISION TREE MODULE
-//  Depends on: ITEMS (data.js), svgIcon / rarityPill /
-//  elementPill / dangerPill / valuePill / customFeatures (app.js)
+//  Depends on: ITEMS, FEATURES, ICONS, DATASET_META (data.js)
+//              getIcon, renderFeatureValue, customFeatures (app.js)
 // ══════════════════════════════════════════════════
 
 // ── State ─────────────────────────────────────────
 let dt = {
-  question:      '',
-  trainingItems: [],   // shuffled ITEMS
-  labels:        {},   // itemId -> true (yes) | false (no)
-  currentIndex:  0,
-  tree:          null,
-  showMath:      false,
+  question:        '',
+  trainingItems:   [],   // shuffled ITEMS
+  labels:          {},   // itemId -> true (yes) | false (no)
+  labelFeature:    null, // feature key used as label (excluded from splits)
+  currentIndex:    0,
+  tree:            null,
+  showMath:        false,
+  testCorrections: {},   // itemId -> true/false, set when user moves icons in Test phase
 };
 
 let _dragStartX  = null;
@@ -21,10 +23,11 @@ let _dtMode      = 'question'; // 'question' | 'feature'
 
 // ── Open / Close ──────────────────────────────────
 function openDecisionTree() {
-  dt.question     = '';
-  dt.labels       = {};
-  dt.currentIndex = 0;
-  dt.tree         = null;
+  dt.question      = '';
+  dt.labels        = {};
+  dt.labelFeature  = null;
+  dt.currentIndex  = 0;
+  dt.tree          = null;
   dt.trainingItems = [...ITEMS].sort(() => Math.random() - 0.5);
 
   document.getElementById('dt-question-input').value = '';
@@ -39,7 +42,7 @@ function closeDT() {
 }
 
 function _showPhase(phase) {
-  ['question', 'swipe', 'building', 'tree'].forEach(p => {
+  ['question', 'swipe', 'building', 'tree', 'test'].forEach(p => {
     document.getElementById('dt-phase-' + p).classList.add('hidden');
   });
   document.getElementById('dt-phase-' + phase).classList.remove('hidden');
@@ -65,10 +68,11 @@ function _updateStepper(phase) {
     swipe:    2,
     building: 2,
     tree:     3,
+    test:     4,
   };
   const active = steps[phase] || 1;
 
-  [1, 2, 3].forEach(function(n) {
+  [1, 2, 3, 4].forEach(function(n) {
     const el = document.getElementById('dt-step-' + n);
     el.classList.remove('active', 'done');
     if (n < active)      el.classList.add('done');
@@ -95,10 +99,10 @@ function _populateFeatureSelect() {
   const sel = document.getElementById('dt-feature-select');
   const prev = sel.value;
   sel.innerHTML = '<option value="">— Select a feature —</option>';
-  _FEATURES.forEach(function(f) {
+  _FEATURES().forEach(function(f) {
     const opt = document.createElement('option');
     opt.value = f;
-    opt.textContent = _FEAT_LABEL[f] || f;
+    opt.textContent = _FEAT_LABEL()[f] || f;
     sel.appendChild(opt);
   });
   if (typeof customFeatures !== 'undefined') {
@@ -136,12 +140,15 @@ function dtStartTraining() {
     const val  = document.getElementById('dt-value-select').value;
     if (!feat) { alert('Please select a feature!'); return; }
     if (!val)  { alert('Please select a value for YES!'); return; }
-    const featLabel = _FEAT_LABEL[feat] || feat;
+    const featLabel = _FEAT_LABEL()[feat] || feat;
     dt.question = featLabel + ': ' + val + '?';
+    dt.labelFeature = feat;
     dt.labels = {};
     ITEMS.forEach(function(item) {
       dt.labels[item.id] = String(_fval(item, feat)) === String(val);
     });
+    _showPhase('building');
+    return;
   } else {
     const q = document.getElementById('dt-question-input').value.trim();
     if (!q) { alert('Please enter a question for the AI to answer!'); return; }
@@ -203,18 +210,13 @@ function _renderSwipeCard() {
   card.style.transform  = 'translateX(0) rotate(0deg)';
   card.style.opacity    = '1';
 
+  const _subtitleKey = (typeof DATASET_META !== 'undefined' && DATASET_META.subtitleKey) || 'cat';
   card.innerHTML =
-    '<div class="dt-card-icon">' + svgIcon(item.id) + '</div>' +
+    '<div class="dt-card-icon">' + getIcon(item.id) + '</div>' +
     '<div class="dt-card-name">' + _esc(item.name) + '</div>' +
-    '<div class="dt-card-cat">'  + _esc(item.cat)  + '</div>' +
+    '<div class="dt-card-cat">'  + _esc(item[_subtitleKey] || '') + '</div>' +
     '<div class="dt-card-pills">' +
-      rarityPill(item.rarity) +
-      elementPill(item.element) +
-      dangerPill(item.danger) +
-      valuePill(item.value) +
-      (item.usable
-        ? '<span class="pill pill-safe">Usable</span>'
-        : '<span class="pill pill-common">Not Usable</span>') +
+      FEATURES.map(function(f) { return renderFeatureValue(f, item); }).join('') +
     '</div>';
 
   // Attach drag events
@@ -311,22 +313,15 @@ function dtSwipe(isYes) {
 }
 
 // ── Decision Tree Algorithm ───────────────────────
-const _FEATURES = ['rarity', 'element', 'cat', 'weight', 'danger', 'usable', 'value'];
-
-const _FEAT_LABEL = {
-  rarity: 'Rarity', element: 'Element', cat: 'Type',
-  weight: 'Weight', danger: 'Danger', usable: 'Usable', value: 'Value',
-};
+// These are functions instead of constants so they read FEATURES lazily (after dataset loads).
+function _FEATURES() { return FEATURES.map(function(f) { return f.key; }); }
+function _FEAT_LABEL() { return FEATURES.reduce(function(acc, f) { acc[f.key] = f.label; return acc; }, {}); }
 
 function _fval(item, feat) {
-  switch (feat) {
-    case 'rarity':  return item.rarity;
-    case 'element': return item.element;
-    case 'cat':     return item.cat;
-    case 'weight':  return item.weight;
-    case 'danger':  return item.danger;
-    case 'usable':  return item.usable ? 'Usable' : 'Not Usable';
-    case 'value':   return item.value;
+  const f = FEATURES.find(function(fd) { return fd.key === feat; });
+  if (f) {
+    if (f.type === 'boolean') return item[feat] ? 'Yes' : 'No';
+    return item[feat];
   }
   const cf = (typeof customFeatures !== 'undefined')
     ? customFeatures.find(function(c) { return c.key === feat; })
@@ -347,8 +342,9 @@ function _bestSplit(items, features) {
   let best = { gain: -1, feature: null, splitVal: null, isNumeric: false, math: null };
 
   features.forEach(function(feat) {
-    if (feat === 'value') {
-      const vals = Array.from(new Set(items.map(function(i) { return i.value; }))).sort(function(a, b) { return a - b; });
+    const _fd = FEATURES.find(function(fd) { return fd.key === feat; });
+    if (_fd && _fd.type === 'number') {
+      const vals = Array.from(new Set(items.map(function(i) { return _fval(i, feat); }))).sort(function(a, b) { return a - b; });
       for (let k = 0; k < vals.length - 1; k++) {
         const thr    = (vals[k] + vals[k + 1]) / 2;
         const left   = items.filter(function(i) { return i.value <= thr; });
@@ -407,14 +403,14 @@ function _buildDTree(items, features, depth, maxDepth) {
 
   let leftItems, rightItems, condition;
   if (best.isNumeric) {
-    leftItems  = items.filter(function(i) { return i.value <= best.splitVal; });
-    rightItems = items.filter(function(i) { return i.value > best.splitVal; });
-    condition  = 'Value \u2264 ' + Math.round(best.splitVal);
+    leftItems  = items.filter(function(i) { return _fval(i, best.feature) <= best.splitVal; });
+    rightItems = items.filter(function(i) { return _fval(i, best.feature) > best.splitVal; });
+    condition  = (_FEAT_LABEL()[best.feature] || best.feature) + ' \u2264 ' + Math.round(best.splitVal);
   } else {
     leftItems  = items.filter(function(i) { return _fval(i, best.feature) === best.splitVal; });
     rightItems = items.filter(function(i) { return _fval(i, best.feature) !== best.splitVal; });
-    const fl   = _FEAT_LABEL[best.feature] || best.feature;
-    condition  = (best.feature === 'usable') ? best.splitVal : (fl + ' = ' + best.splitVal);
+    const fl   = _FEAT_LABEL()[best.feature] || best.feature;
+    condition  = fl + ' = ' + best.splitVal;
   }
 
   return {
@@ -440,12 +436,15 @@ function _trainAndShow() {
     return Object.assign({}, item, { _label: dt.labels[item.id] === true });
   });
 
-  const features = _FEATURES.slice();
+  const features = _FEATURES();
   if (typeof customFeatures !== 'undefined') {
     customFeatures.forEach(function(cf) { features.push(cf.key); });
   }
+  const splitFeatures = dt.labelFeature
+    ? features.filter(function(f) { return f !== dt.labelFeature; })
+    : features;
 
-  dt.tree = _buildDTree(trainingData, features, 0, 3);
+  dt.tree = _buildDTree(trainingData, splitFeatures, 0, 3);
   _showPhase('tree');
 }
 
@@ -813,4 +812,272 @@ function _esc(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+// ══════════════════════════════════════════════════
+//  PHASE 4 — TEST YOUR MODEL
+// ══════════════════════════════════════════════════
+
+// Floating tooltip element (created once, reused)
+var _dtTooltipEl = null;
+
+function _getOrCreateTooltip() {
+  if (!_dtTooltipEl) {
+    _dtTooltipEl = document.getElementById('dt-float-tooltip');
+  }
+  return _dtTooltipEl;
+}
+
+function _showTestTooltip(e, html) {
+  var el = _getOrCreateTooltip();
+  if (!el) return;
+  el.innerHTML = html;
+  el.style.display = 'block';
+  _moveTestTooltip(e);
+}
+
+function _moveTestTooltip(e) {
+  var el = _getOrCreateTooltip();
+  if (!el || el.style.display === 'none') return;
+  var x = e.clientX + 14;
+  var y = e.clientY - 12;
+  var w = el.offsetWidth;
+  var h = el.offsetHeight;
+  if (x + w > window.innerWidth  - 8) x = e.clientX - w - 14;
+  if (y + h > window.innerHeight - 8) y = e.clientY - h - 12;
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+}
+
+function _hideTestTooltip() {
+  var el = _getOrCreateTooltip();
+  if (el) el.style.display = 'none';
+}
+
+// Get icon from TEST_ICONS (falls back to a plain circle)
+function _getTestIcon(id) {
+  return (typeof TEST_ICONS !== 'undefined' && TEST_ICONS[id])
+    ? TEST_ICONS[id]
+    : '<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="30" fill="#555"/></svg>';
+}
+
+// Walk the built decision tree for one item; returns true = YES, false = NO
+function _classify(node, item) {
+  if (node.isLeaf) return node.label === 'yes';
+  var val    = _fval(item, node.feature);
+  var goLeft = node.isNumeric
+    ? (Number(val) <= node.splitVal)
+    : (String(val) === String(node.splitVal));
+  return _classify(goLeft ? node.left : node.right, item);
+}
+
+// ── Entry points ──────────────────────────────────
+function dtGoToTest() {
+  if (!dt.tree) return;
+  if (typeof TEST_ITEMS === 'undefined' || !TEST_ITEMS.length) {
+    alert('test_data.js not loaded — make sure it is included before data.js.');
+    return;
+  }
+  document.getElementById('dt-test-question').textContent = '\u201c' + dt.question + '\u201d';
+  _showPhase('test');
+  dtRunTest();
+}
+
+function dtGoBackToTree() {
+  _showPhase('tree');
+}
+
+// ── Main animation loop ───────────────────────────
+function dtRunTest() {
+  if (!dt.tree || typeof TEST_ITEMS === 'undefined') return;
+
+  // Reset buckets and summary
+  document.getElementById('dt-bucket-yes-items').innerHTML = '';
+  document.getElementById('dt-bucket-no-items').innerHTML  = '';
+  document.getElementById('dt-bucket-yes-count').textContent = '0';
+  document.getElementById('dt-bucket-no-count').textContent  = '0';
+  document.getElementById('dt-test-summary').classList.add('hidden');
+  document.getElementById('dt-replay-btn').classList.add('hidden');
+  document.getElementById('dt-test-switch-hint').classList.add('hidden');
+  dt.testCorrections = {};
+  var _retrainBtn = document.getElementById('dt-test-retrain-btn');
+  if (_retrainBtn) _retrainBtn.classList.remove('dt-retrain-glow');
+
+  // Pre-classify all test items
+  var results = TEST_ITEMS.map(function(item) {
+    return { item: item, isYes: _classify(dt.tree, item) };
+  });
+
+  var yesCount = 0;
+  var noCount  = 0;
+  var flyer    = document.getElementById('dt-test-flyer');
+
+  // Start hidden
+  flyer.style.transition = 'none';
+  flyer.style.opacity    = '0';
+  flyer.style.transform  = 'scale(0)';
+
+  function runNext(i) {
+    if (i >= results.length) {
+      // All done — hide flyer, show summary
+      flyer.style.transition = 'opacity 0.2s ease';
+      flyer.style.opacity    = '0';
+
+      var summary = document.getElementById('dt-test-summary');
+      summary.innerHTML =
+        '<span class="dt-test-sum-yes">' + yesCount + ' &#10142; YES &#10003;</span>' +
+        '&nbsp;&nbsp;&nbsp;' +
+        '<span class="dt-test-sum-no">' + noCount + ' &#10142; NO &#10007;</span>';
+      summary.classList.remove('hidden');
+      document.getElementById('dt-replay-btn').classList.remove('hidden');
+      document.getElementById('dt-test-switch-hint').classList.remove('hidden');
+      return;
+    }
+
+    var res   = results[i];
+    var item  = res.item;
+    var isYes = res.isYes;
+
+    // ─── 1. Appear in center ─────────────────────
+    flyer.style.transition = 'none';
+    flyer.style.transform  = 'scale(0)';
+    flyer.style.opacity    = '0';
+    flyer.innerHTML        = _getTestIcon(item.id);
+
+    // Force reflow so transition registers
+    flyer.offsetHeight;
+
+    flyer.style.transition = 'transform 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease';
+    flyer.style.transform  = 'scale(1)';
+    flyer.style.opacity    = '1';
+
+    // ─── 2. Fly to bucket after 650ms ────────────
+    setTimeout(function() {
+      var flyerRect  = flyer.getBoundingClientRect();
+      var targetEl   = document.getElementById(isYes ? 'dt-bucket-yes-items' : 'dt-bucket-no-items');
+      var targetRect = targetEl.getBoundingClientRect();
+
+      var flyerCX  = flyerRect.left  + flyerRect.width  / 2;
+      var flyerCY  = flyerRect.top   + flyerRect.height / 2;
+      var targetCX = targetRect.left + targetRect.width  / 2;
+      var targetCY = targetRect.top  + targetRect.height / 2;
+
+      var dx = targetCX - flyerCX;
+      var dy = targetCY - flyerCY;
+
+      flyer.style.transition = 'transform 0.42s cubic-bezier(0.4,0,1,1), opacity 0.32s ease 0.12s';
+      flyer.style.transform  = 'translate(' + dx + 'px,' + dy + 'px) scale(0.38)';
+      flyer.style.opacity    = '0';
+
+      // ─── 3. Land in bucket after fly ──────────
+      setTimeout(function() {
+        if (isYes) yesCount++;
+        else       noCount++;
+
+        // Update count label
+        document.getElementById(isYes ? 'dt-bucket-yes-count' : 'dt-bucket-no-count')
+          .textContent = String(isYes ? yesCount : noCount);
+
+        // Build tooltip HTML
+        var tooltipHtml = '<strong>' + _esc(item.name) + '</strong>' +
+          FEATURES.map(function(f) {
+            var val = f.type === 'boolean'
+              ? (item[f.key] ? _esc(f.trueLabel)  : _esc(f.falseLabel))
+              : _esc(String(item[f.key] !== undefined ? item[f.key] : '\u2014'));
+            return '<span><em>' + _esc(f.label) + '</em>: ' + val + '</span>';
+          }).join('');
+
+        // Create mini icon element
+        var mini = document.createElement('div');
+        mini.className = 'dt-test-mini';
+        mini.innerHTML = _getTestIcon(item.id);
+        mini.dataset.itemId = String(item.id);
+        mini.dataset.isYes  = isYes ? '1' : '0';
+        dt.testCorrections[item.id] = isYes;
+
+        mini.addEventListener('mouseenter', function(e) { _showTestTooltip(e, tooltipHtml); });
+        mini.addEventListener('mousemove',  _moveTestTooltip);
+        mini.addEventListener('mouseleave', _hideTestTooltip);
+        (function(capturedId) {
+          mini.addEventListener('click', function() { _hideTestTooltip(); dtSwitchBucket(capturedId); });
+        })(item.id);
+
+        document.getElementById(isYes ? 'dt-bucket-yes-items' : 'dt-bucket-no-items')
+          .appendChild(mini);
+
+        // Flash bucket border
+        var bucket = document.getElementById(isYes ? 'dt-bucket-yes' : 'dt-bucket-no');
+        bucket.classList.add('dt-bucket-flash');
+        setTimeout(function() { bucket.classList.remove('dt-bucket-flash'); }, 420);
+
+        // ─── 4. Next item ──────────────────────
+        setTimeout(function() { runNext(i + 1); }, 180);
+      }, 460);
+    }, 650);
+  }
+
+  runNext(0);
+}
+
+// ── Switch a test item between YES / NO buckets ───
+function dtSwitchBucket(itemId) {
+  var yesEl = document.getElementById('dt-bucket-yes-items');
+  var noEl  = document.getElementById('dt-bucket-no-items');
+  var mini  = yesEl.querySelector('[data-item-id="' + itemId + '"]') ||
+               noEl.querySelector('[data-item-id="' + itemId + '"]');
+  if (!mini) return;
+
+  var wasYes = mini.dataset.isYes === '1';
+  var nowYes = !wasYes;
+
+  (wasYes ? yesEl : noEl).removeChild(mini);
+  mini.dataset.isYes = nowYes ? '1' : '0';
+  (nowYes ? yesEl : noEl).appendChild(mini);
+
+  dt.testCorrections[itemId] = nowYes;
+
+  // Update per-bucket counts
+  var newYes = yesEl.children.length;
+  var newNo  = noEl.children.length;
+  document.getElementById('dt-bucket-yes-count').textContent = newYes;
+  document.getElementById('dt-bucket-no-count').textContent  = newNo;
+
+  // Update bottom summary bar if it's visible
+  var summary = document.getElementById('dt-test-summary');
+  if (summary && !summary.classList.contains('hidden')) {
+    summary.innerHTML =
+      '<span class="dt-test-sum-yes">' + newYes + ' &#10142; YES &#10003;</span>' +
+      '&nbsp;&nbsp;&nbsp;' +
+      '<span class="dt-test-sum-no">' + newNo + ' &#10142; NO &#10007;</span>';
+  }
+
+  // Flash destination bucket
+  var dest = document.getElementById(nowYes ? 'dt-bucket-yes' : 'dt-bucket-no');
+  dest.classList.add('dt-bucket-flash');
+  setTimeout(function() { dest.classList.remove('dt-bucket-flash'); }, 420);
+
+  // Glow the Retrain button
+  var retrainBtn = document.getElementById('dt-test-retrain-btn');
+  if (retrainBtn) retrainBtn.classList.add('dt-retrain-glow');
+}
+
+// ── Retrain using original labels + test corrections ─
+function dtRetrainWithCorrections() {
+  // Add any test items to the training pool (avoid duplicates)
+  if (typeof TEST_ITEMS !== 'undefined') {
+    TEST_ITEMS.forEach(function(ti) {
+      if (!dt.trainingItems.some(function(tr) { return tr.id === ti.id; })) {
+        dt.trainingItems.push(ti);
+      }
+    });
+  }
+
+  // Merge test corrections into dt.labels
+  Object.keys(dt.testCorrections).forEach(function(id) {
+    dt.labels[id] = dt.testCorrections[id];
+  });
+
+  // _showPhase('building') triggers _trainAndShow after a short delay,
+  // which reads dt.trainingItems + dt.labels — now includes test data
+  _showPhase('building');
 }

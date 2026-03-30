@@ -432,25 +432,11 @@ footer {
   color: #d8b4fe;
 }
 
-/* ── FEATURE EDIT BUTTON ── */
-.feat-edit-btn {
-  opacity: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-dim);
-  font-size: 0.68rem;
-  padding: 2px 5px;
-  border-radius: 5px;
-  transition: opacity 0.15s, color 0.15s, background 0.15s;
-  margin-left: 4px;
-  flex-shrink: 0;
-  line-height: 1;
-}
-.item-card.expanded .feature-row:hover .feat-edit-btn { opacity: 1; }
-.feat-edit-btn:hover { color: #c084fc; background: rgba(124,58,237,0.15); }
-
-.feat-edit-placeholder { display: inline-block; width: 24px; flex-shrink: 0; margin-left: 4px; }
+/* ── CLICKABLE PILLS (card + table) ── */
+.card-pill-edit,
+.table-pill-edit { cursor: pointer; }
+.card-pill-edit:hover .pill,
+.table-pill-edit:hover .pill { outline: 1px solid rgba(192,132,252,0.5); }
 
 .feat-select {
   background: rgba(20,10,50,0.9);
@@ -1036,7 +1022,8 @@ select.modal-input option { background: #1a1a3a; color: var(--text); }
 #dt-phase-question,
 #dt-phase-swipe,
 #dt-phase-building,
-#dt-phase-tree {
+#dt-phase-tree,
+#dt-phase-test {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -1237,4 +1224,351 @@ select.modal-input option { background: #1a1a3a; color: var(--text); }
   .dt-arena-hint { display: none; }
   .dt-build-row { flex-direction: column; align-items: stretch; }
   .dt-build-btn { text-align: center; }
+}
+
+/* ══════════════════════════════════════════════════
+   PHASE 4 — TEST YOUR MODEL
+   ══════════════════════════════════════════════════ */
+
+.dt-test-intro {
+  font-size: 0.8rem;
+  color: rgba(192,132,252,0.65);
+  text-align: center;
+  margin: 6px 0 14px;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+/* ── Animation arena ── */
+.dt-test-arena {
+  position: relative;
+  flex: 1;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+/* Flying item — absolute-positioned, transitions to bucket */
+.dt-test-flyer {
+  position: absolute;
+  left: calc(50% - 31px);
+  top: 8px;
+  width: 62px;
+  height: 62px;
+  opacity: 0;
+  transform: scale(0);
+  z-index: 10;
+  pointer-events: none;
+  filter: drop-shadow(0 0 12px rgba(168,85,247,0.7));
+}
+
+/* ── Bucket row ── */
+.dt-buckets-row {
+  display: flex;
+  gap: 14px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.dt-bucket {
+  flex: 1;
+  border-radius: 10px 10px 20px 20px;
+  border: 2px solid;
+  display: flex;
+  flex-direction: column;
+  min-height: 148px;
+  transition: box-shadow 0.35s ease, border-color 0.35s ease;
+  overflow: visible; /* let tooltips escape */
+}
+
+.dt-bucket-yes {
+  border-color: rgba(74,222,128,0.35);
+  background: rgba(22,101,52,0.1);
+}
+.dt-bucket-no {
+  border-color: rgba(248,113,113,0.35);
+  background: rgba(127,29,29,0.1);
+}
+.dt-bucket-yes.dt-bucket-flash {
+  border-color: #4ade80;
+  box-shadow: 0 0 28px rgba(74,222,128,0.45);
+}
+.dt-bucket-no.dt-bucket-flash {
+  border-color: #f87171;
+  box-shadow: 0 0 28px rgba(248,113,113,0.45);
+}
+
+.dt-bucket-label {
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  border-bottom: 1px solid;
+  flex-shrink: 0;
+}
+.dt-bucket-yes .dt-bucket-label {
+  color: #4ade80;
+  border-color: rgba(74,222,128,0.2);
+  background: rgba(22,101,52,0.18);
+}
+.dt-bucket-no .dt-bucket-label {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.2);
+  background: rgba(127,29,29,0.18);
+}
+
+.dt-bucket-well {
+  flex: 1;
+  padding: 6px 4px 2px;
+  overflow: visible;
+}
+
+.dt-bucket-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  align-content: flex-start;
+}
+
+.dt-bucket-count {
+  padding: 4px 6px;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  border-top: 1px solid;
+  flex-shrink: 0;
+}
+.dt-bucket-yes .dt-bucket-count { color: #4ade80; border-color: rgba(74,222,128,0.18); }
+.dt-bucket-no  .dt-bucket-count { color: #f87171; border-color: rgba(248,113,113,0.18); }
+
+/* ── Mini item icons inside bucket ── */
+.dt-test-mini {
+  width: 38px;
+  height: 38px;
+  position: relative;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: transform 0.18s ease, filter 0.18s ease;
+  animation: dt-mini-land 0.38s cubic-bezier(0.34,1.56,0.64,1) both;
+  z-index: 1;
+}
+.dt-test-mini:hover {
+  transform: scale(1.35);
+  filter: drop-shadow(0 0 8px rgba(168,85,247,0.6));
+  z-index: 20;
+}
+
+@keyframes dt-mini-land {
+  0%   { transform: scale(0) translateY(-12px); opacity: 0; }
+  70%  { transform: scale(1.15) translateY(2px); opacity: 1; }
+  100% { transform: scale(1)    translateY(0);   opacity: 1; }
+}
+
+/* ── Switch-bucket instruction (shown after animation ends) ── */
+.dt-test-hint {
+  font-size: 0.78rem;
+  color: rgba(192,132,252,0.85);
+  text-align: center;
+  margin: -8px 0 10px;
+  line-height: 1.5;
+  animation: dt-hint-fade 0.5s ease both;
+}
+@keyframes dt-hint-fade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── Retrain-glow (pulses when corrections have been made) ── */
+@keyframes dt-retrain-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(168,85,247,0); }
+  50%      { box-shadow: 0 0 18px 5px rgba(168,85,247,0.75); }
+}
+.dt-retrain-glow {
+  animation: dt-retrain-pulse 1.1s ease-in-out infinite !important;
+  border-color: rgba(168,85,247,0.85) !important;
+  color: #c084fc !important;
+}
+
+/* ── Floating tooltip ── */
+.dt-float-tooltip {
+  display: none;
+  position: fixed;
+  background: #131330;
+  border: 1px solid rgba(124,58,237,0.55);
+  border-radius: 11px;
+  padding: 9px 13px;
+  z-index: 9999;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.65), 0 0 20px rgba(124,58,237,0.12);
+  pointer-events: none;
+  max-width: 210px;
+}
+.dt-float-tooltip strong {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #c084fc;
+  margin-bottom: 5px;
+  letter-spacing: 0.02em;
+}
+.dt-float-tooltip span {
+  display: block;
+  font-size: 0.68rem;
+  color: #8888aa;
+  line-height: 1.6;
+}
+.dt-float-tooltip span em {
+  font-style: normal;
+  color: rgba(192,132,252,0.55);
+}
+
+/* ── Result summary ── */
+.dt-test-summary {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  padding: 9px 16px;
+  background: rgba(124,58,237,0.08);
+  border: 1px solid rgba(124,58,237,0.22);
+  border-radius: 10px;
+  margin-top: 10px;
+  flex-shrink: 0;
+  animation: dt-summary-appear 0.4s ease both;
+}
+.dt-test-summary.hidden { display: none; }
+
+@keyframes dt-summary-appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dt-test-sum-yes {
+  color: #4ade80;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+.dt-test-sum-no {
+  color: #f87171;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+
+/* Push the build row to the bottom when in test phase */
+#dt-phase-test .dt-build-row { margin-top: auto; }
+
+/* ── DATASET SELECTION SCREEN ── */
+#dataset-select-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(124,58,237,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(168,85,247,0.10) 0%, transparent 50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  z-index: 1000;
+  padding: 32px;
+}
+
+#dataset-select-screen.hidden { display: none; }
+
+.ds-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.ds-logo {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 4px;
+}
+
+.ds-hero h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #c084fc 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ds-hero p {
+  color: var(--text-dim);
+  font-size: 1.05rem;
+}
+
+.ds-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  max-width: 860px;
+}
+
+.ds-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 28px 24px 20px;
+  width: 248px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.ds-card:hover {
+  border-color: var(--accent2);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(124,58,237,0.28);
+}
+
+.ds-emoji {
+  font-size: 2.8rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.ds-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ds-card p {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+  flex: 1;
+}
+
+.ds-tagline {
+  font-size: 0.68rem;
+  color: var(--accent2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+}
+
+.ds-btn {
+  margin-top: 10px;
+  width: 100%;
+  pointer-events: none; /* card click handles it */
 }
