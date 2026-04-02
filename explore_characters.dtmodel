@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "datasetId": "characters",
+  "exploreContext": "An outside contractor built this 'Threat Identifier' to help gate guards spot Foes among travelers. But guards are reporting that some obvious threats are walking right through! The contractor only trained on the most blatant cases — can you find all the Foes the model lets slip by before you rebuild it from scratch?",
+  "exploreGroundTruth": {
+    "215": true, "216": true, "217": true, "218": true, "219": true,
+    "220": true, "221": true, "222": true, "223": true, "224": true,
+    "225": true, "226": true, "227": true
+  },
+  "itemEdits": {},
+  "customFeatures": [],
+  "model": {
+    "question": "Is this character a Foe?",
+    "labelFeature": null,
+    "labelValue": "",
+    "selectedFeatures": ["disposition", "strength"],
+    "labels": {
+      "215": true,  "216": true,  "217": true,  "219": true,
+      "220": true,  "222": true,  "223": true,  "224": true,
+      "201": false, "202": false, "203": false, "204": false,
+      "205": false, "206": false, "207": false, "208": false,
+      "209": false, "211": false, "228": false, "229": false,
+      "232": false, "236": false, "237": false
+    },
+    "tree": null
+  }
+}

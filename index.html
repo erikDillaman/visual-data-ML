@@ -3,10 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Data Makes AI — Fantasy Item Explorer</title>
+<title>Data Makes AI</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<!-- ══════════════════ DATASET SELECTION SCREEN ══════════════════ -->
+<div id="dataset-select-screen">
+  <div class="ds-hero">
+    <svg class="ds-logo" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="19,2 36,12 36,26 19,36 2,26 2,12" fill="url(#dslgm)" opacity="0.9"/>
+      <polygon points="19,2 36,12 19,18" fill="rgba(255,255,255,0.15)"/>
+      <polygon points="19,2 2,12 19,18" fill="rgba(255,255,255,0.08)"/>
+      <defs>
+        <linearGradient id="dslgm" x1="2" y1="2" x2="36" y2="36">
+          <stop offset="0%" stop-color="#c084fc"/>
+          <stop offset="100%" stop-color="#6d28d9"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <h1>Data Makes AI</h1>
+    <p>Choose a dataset to explore</p>
+  </div>
+  <div class="ds-mode-toggle">
+    <button class="ds-mode-btn active" id="ds-mode-build" onclick="setDSMode('build')">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <rect x="1" y="7" width="3" height="5" rx="0.8" fill="currentColor"/>
+        <rect x="5" y="4" width="3" height="8" rx="0.8" fill="currentColor"/>
+        <rect x="9" y="1" width="3" height="11" rx="0.8" fill="currentColor"/>
+      </svg>
+      Build Mode
+    </button>
+    <button class="ds-mode-btn" id="ds-mode-explore" onclick="setDSMode('explore')">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <circle cx="6.5" cy="6.5" r="3" stroke="currentColor" stroke-width="1.3"/>
+        <circle cx="6.5" cy="6.5" r="1" fill="currentColor"/>
+        <line x1="1" y1="6.5" x2="3.2" y2="6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="9.8" y1="6.5" x2="12" y2="6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="6.5" y1="1" x2="6.5" y2="3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="6.5" y1="9.8" x2="6.5" y2="12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Explore Mode
+    </button>
+  </div>
+  <div class="ds-grid" id="ds-grid"></div>
+</div>
 
 <header>
   <div class="header-left">
@@ -29,6 +70,24 @@
   </div>
 
   <div class="header-actions">
+    <div id="model-actions" class="hidden">
+      <button class="model-save-btn" onclick="exportModel()" title="Save model to file">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 2h7.5L12 4.5V12H2V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          <rect x="4" y="7.5" width="6" height="3.2" rx="0.5" stroke="currentColor" stroke-width="1.1"/>
+          <rect x="4.5" y="2.2" width="3.5" height="2.3" rx="0.5" stroke="currentColor" stroke-width="1.1"/>
+        </svg>
+        Save
+      </button>
+      <button class="model-load-btn" onclick="importModel()" title="Load model from file">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 9V3.5M7 3.5L5 5.5M7 3.5L9 5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 9.5v2h10v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Load
+      </button>
+      <input type="file" id="model-file-input" accept=".dtmodel,.json" style="display:none" onchange="_onModelFileSelected(event)">
+    </div>
     <button class="dt-header-btn" onclick="openDecisionTree()">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
         <circle cx="7" cy="1.8" r="1.5" fill="currentColor"/>
@@ -65,7 +124,27 @@
   </div>
 </header>
 
+<!-- ══════════════════ EXPLORE MODE BANNER ══════════════════ -->
+<div id="explore-banner" class="explore-banner hidden">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+    <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
+    <line x1="1" y1="8" x2="3.8" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="12.2" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="8" y1="1" x2="8" y2="3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="8" y1="12.2" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+  <span><strong>Explore Mode</strong> &mdash; Trace the AI&rsquo;s reasoning and find its mistakes before rebuilding.</span>
+</div>
+
 <main>
+
+  <!-- ══════════════════ EXPLORE CONTEXT BOX ══════════════════ -->
+  <div id="explore-context-box" class="explore-context-box hidden">
+    <div class="explore-ctx-label">🤖 The contractor&rsquo;s AI is trying to answer:</div>
+    <div id="explore-ctx-question" class="explore-ctx-question"></div>
+    <p id="explore-ctx-description" class="explore-ctx-description"></p>
+  </div>
 
   <!-- ══════════════════ CARD VIEW ══════════════════ -->
   <div class="view active" id="view-card">
@@ -84,18 +163,7 @@
     <div class="section-label">Click any column header to sort &bull; 40 Items &bull; 3 Features</div>
     <div class="table-wrapper">
       <table id="data-table">
-        <thead>
-          <tr>
-            <th onclick="sortTable(0)" data-col="0">Item <span class="sort-indicator">⇅</span></th>
-            <th onclick="sortTable(1)" data-col="1">Rarity <span class="sort-indicator">⇅</span></th>
-            <th onclick="sortTable(2)" data-col="2">Value <span class="sort-indicator">⇅</span></th>
-            <th onclick="sortTable(3)" data-col="3">Element <span class="sort-indicator">⇅</span></th>
-            <th onclick="sortTable(4)" data-col="4">Type <span class="sort-indicator">⇅</span></th>
-            <th onclick="sortTable(5)" data-col="5">Weight <span class="sort-indicator">⇅</span></th>
-            <th onclick="sortTable(6)" data-col="6">Danger <span class="sort-indicator">⇅</span></th>
-            <th onclick="sortTable(7)" data-col="7">Usable <span class="sort-indicator">⇅</span></th>
-          </tr>
-        </thead>
+        <thead><tr></tr></thead>
         <tbody id="table-body"></tbody>
       </table>
     </div>
@@ -111,13 +179,7 @@
         <h2>Add a New Feature</h2>
         <p>Choose a feature to track for every item — this adds a new category of data to your dataset!</p>
         <div class="modal-label">Suggested Features</div>
-        <div class="chip-grid" id="feature-chips">
-          <button class="chip" onclick="selectFeatureSuggestion('Crafting Use',this)">⚒ Crafting Use</button>
-          <button class="chip" onclick="selectFeatureSuggestion('Found In',this)">📍 Found In</button>
-          <button class="chip" onclick="selectFeatureSuggestion('Origin',this)">🌀 Origin</button>
-          <button class="chip" onclick="selectFeatureSuggestion('Combat Effect',this)">⚔ Combat Effect</button>
-          <button class="chip" onclick="selectFeatureSuggestion('Season Found',this)">🍂 Season Found</button>
-        </div>
+        <div class="chip-grid" id="feature-chips"></div>
         <div class="modal-label">Or name your own</div>
         <input class="modal-input" id="feature-name-input" placeholder="e.g. Trade Route, Power Level…" oninput="modalFeatureName=this.value"/>
         <div class="modal-actions">
@@ -160,12 +222,22 @@
       <div class="dt-step-connector"></div>
       <div class="dt-step" id="dt-step-2">
         <div class="dt-step-num">2</div>
-        <div class="dt-step-label">Label Items</div>
+        <div class="dt-step-label">Pick Features</div>
       </div>
       <div class="dt-step-connector"></div>
       <div class="dt-step" id="dt-step-3">
         <div class="dt-step-num">3</div>
+        <div class="dt-step-label">Label Items</div>
+      </div>
+      <div class="dt-step-connector"></div>
+      <div class="dt-step" id="dt-step-4">
+        <div class="dt-step-num">4</div>
         <div class="dt-step-label">Decision Tree</div>
+      </div>
+      <div class="dt-step-connector"></div>
+      <div class="dt-step" id="dt-step-5">
+        <div class="dt-step-num">5</div>
+        <div class="dt-step-label">Test Model</div>
       </div>
     </div>
 
@@ -198,6 +270,18 @@
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeDT()">Cancel</button>
         <button class="btn-primary" onclick="dtStartTraining()">Start Labeling →</button>
+      </div>
+    </div>
+
+    <!-- Phase: Feature Selection -->
+    <div id="dt-phase-features" class="hidden">
+      <h2>Pick Your Features</h2>
+      <p>Choose which features the AI is allowed to use when building its decision tree. Toggle any feature off to hide it from the model.</p>
+      <div class="dt-feat-pills-grid" id="dt-feature-pills"></div>
+      <div class="dt-features-hint" id="dt-features-hint"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="_showPhase('question')">&#8592; Back</button>
+        <button class="btn-primary" id="dt-features-continue-btn" onclick="dtConfirmFeatures()">Continue &#8594;</button>
       </div>
     </div>
 
@@ -252,6 +336,7 @@
         </div>
         <div class="dt-tree-actions">
           <button class="btn-secondary" id="dt-math-toggle" onclick="toggleMathPanel()">Show Math</button>
+          <button class="btn-primary" onclick="dtGoToTest()">Test Your Model →</button>
           <button class="btn-secondary" onclick="openDecisionTree()">↺ Retrain</button>
           <button class="btn-secondary" onclick="closeDT()">Close</button>
         </div>
@@ -265,15 +350,70 @@
         <svg id="dt-tree-svg" xmlns="http://www.w3.org/2000/svg" style="display:block;"></svg>
       </div>
       <div class="dt-tree-note" id="dt-tree-note">
-        Each split was chosen to best separate your YES from NO items. Follow any path top-to-bottom to classify a new item!
+        <span class="dt-note-tips">
+          <span>Hover items for details</span>
+          <span>Click a split node to collapse it</span>
+          <span>Click YES or NO to prune a branch</span>
+        </span>
       </div>
+      <div id="dt-train-accuracy" class="dt-train-accuracy hidden"></div>
       <div id="dt-math-panel" class="dt-math-panel hidden"></div>
+    </div>
+
+    <!-- Phase: Test -->
+    <div id="dt-phase-test" class="hidden">
+      <div class="dt-tree-topbar">
+        <div>
+          <h2>Test Your Model</h2>
+          <div class="dt-tree-q" id="dt-test-question"></div>
+        </div>
+        <div class="dt-tree-actions">
+          <button class="btn-secondary" onclick="dtGoBackToTree()">&#8592; Back to Tree</button>
+          <button class="btn-secondary" id="dt-test-retrain-btn" onclick="dtRetrainWithCorrections()">&#8634; Retrain</button>
+          <button class="btn-secondary" onclick="closeDT()">Close</button>
+        </div>
+      </div>
+      <p class="dt-test-intro">These 10 items were never used in training &mdash; watch your decision tree sort them!</p>
+      <p class="dt-test-hint hidden" id="dt-test-switch-hint">Click any icon to move it to the other bucket &mdash; then hit <strong>Retrain</strong> to rebuild the tree with your corrections!</p>
+
+      <div class="dt-test-arena" id="dt-test-arena">
+        <!-- Animated flying item -->
+        <div class="dt-test-flyer" id="dt-test-flyer"></div>
+
+        <!-- YES / NO bucket row -->
+        <div class="dt-buckets-row">
+          <div class="dt-bucket dt-bucket-yes" id="dt-bucket-yes">
+            <div class="dt-bucket-label">&#10003; YES</div>
+            <div class="dt-bucket-well">
+              <div class="dt-bucket-items" id="dt-bucket-yes-items"></div>
+            </div>
+            <div class="dt-bucket-count" id="dt-bucket-yes-count">0</div>
+          </div>
+          <div class="dt-bucket dt-bucket-no" id="dt-bucket-no">
+            <div class="dt-bucket-label">&#10007; NO</div>
+            <div class="dt-bucket-well">
+              <div class="dt-bucket-items" id="dt-bucket-no-items"></div>
+            </div>
+            <div class="dt-bucket-count" id="dt-bucket-no-count">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dt-test-summary hidden" id="dt-test-summary"></div>
+
+      <div class="dt-build-row">
+        <button class="btn-secondary" onclick="dtGoBackToTree()">&#8592; Back to Tree</button>
+        <button class="btn-primary hidden" id="dt-replay-btn" onclick="dtRunTest()">&#8634; Test Again</button>
+      </div>
     </div>
 
   </div>
 </div>
 
-<script src="data.js"></script>
+<!-- Floating tooltip for test item hover -->
+<div id="dt-float-tooltip" class="dt-float-tooltip"></div>
+
+<script src="datasets.js"></script>
 <script src="app.js"></script>
 <script src="dtree.js"></script>
 </body>
