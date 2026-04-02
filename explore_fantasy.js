@@ -1,0 +1,28 @@
+// Explore Mode model for the Fantasy Item Explorer dataset.
+// Edit "exploreContext" to change the narrative shown above the dataset.
+// Edit "exploreGroundTruth" to change which items are considered correct answers.
+// Edit "model.labels" to change what the contractor's AI was trained on.
+window._pendingExploreModel = {
+  version: 1,
+  datasetId: 'fantasy',
+  exploreContext: "A junior contractor built this 'Danger Detector' to flag hazardous items for the vault. They say it works — but adventurers keep finding dangerous items that slipped through unchecked. Your mission: trace through the model and find every item it misclassifies before tearing it down and rebuilding something better.",
+  exploreGroundTruth: {
+    '3': true,  '10': true, '11': true, '16': true, '20': true,
+    '22': true, '25': true, '30': true, '34': true, '37': true
+  },
+  itemEdits: {},
+  customFeatures: [],
+  model: {
+    question: 'Is this item dangerous?',
+    labelFeature: null,
+    labelValue: '',
+    selectedFeatures: ['element', 'usable'],
+    labels: {
+      '3':  true,  '10': true,  '20': true,  '22': true,  '30': true,  '37': true,
+      '1':  false, '5':  false, '8':  false, '9':  false, '12': false, '13': false,
+      '14': false, '18': false, '23': false, '24': false, '26': false, '27': false,
+      '29': false, '32': false, '35': false, '39': false
+    },
+    tree: null
+  }
+};
