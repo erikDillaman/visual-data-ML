@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "datasetId": "fantasy",
+  "exploreContext": "A junior contractor built this 'Danger Detector' to flag hazardous items for the vault. They say it works — but adventurers keep finding dangerous items that slipped through unchecked. Your mission: trace through the model and find every item it misclassifies before tearing it down and rebuilding something better.",
+  "exploreGroundTruth": {
+    "3": true,  "10": true, "11": true, "16": true, "20": true,
+    "22": true, "25": true, "30": true, "34": true, "37": true
+  },
+  "userStories": [
+    {
+      "id": "fs-1",
+      "from": "Guild Master Rowan",
+      "avatar": "⚔️",
+      "subject": "Three adventurers injured — Iron Sword sold as 'safe'",
+      "preview": "The Danger Detector rated the Iron Sword as completely safe. A thief picked one up at the market stall...",
+      "body": "I need answers immediately.\n\nThe Danger Detector your team deployed rated the Iron Sword as SAFE. It was sitting on an open market stall. A thief grabbed it and injured three of my guild members before we could respond.\n\nHow is a bladed weapon labeled safe? I don't care what element it has — it's a weapon. The model is clearly missing something. Fix it before someone gets killed."
+    },
+    {
+      "id": "fs-2",
+      "from": "City Guard Captain Lena",
+      "avatar": "🛡️",
+      "subject": "Dark Dagger cleared through vault inspection",
+      "preview": "A Dark Dagger passed your detector's inspection. An assassination attempt followed that same evening...",
+      "body": "This is a formal complaint.\n\nA Dark Dagger was brought in for vault inspection yesterday. Your Danger Detector flagged it as safe and allowed it to pass. That evening, there was an assassination attempt on a council member — the weapon used matched the description exactly.\n\nDark-elemental weapons with sharp edges should never pass as safe. Your model is ignoring something crucial about how these items work. Please review the training data."
+    },
+    {
+      "id": "fs-3",
+      "from": "Scholar Mirela of the Arcane Archive",
+      "avatar": "📚",
+      "subject": "The 'harmless' Shadow Orb nearly destroyed my archive",
+      "preview": "I picked up the Shadow Orb because your AI said it was safe. I cannot stress how wrong that was...",
+      "body": "I trusted your detector. I should not have.\n\nI acquired a Shadow Orb last week because the Danger Detector classified it as a safe consumable. Within an hour of bringing it into the Arcane Archive, three shelves of manuscripts were corrupted by dark energy.\n\nThe Shadow Orb is a powerful dark artifact — 'Legendary' rarity, pure Dark element. How is your model missing this? Is it even looking at the element? The rarity? The item type? Something is very wrong with its decision-making."
+    },
+    {
+      "id": "fs-4",
+      "from": "Merchant Finn",
+      "avatar": "🏪",
+      "subject": "My shop is cursed. Your detector is to blame.",
+      "preview": "The Cursed Totem passed your safety check. Now everything in my shop is hexed...",
+      "body": "My shop has been cursed for four days now.\n\nI run a reputable trading post. When the Cursed Totem came through, I checked it with your Danger Detector before putting it on the shelf. It said SAFE. I trusted that.\n\nThe name has 'Cursed' in it. It glows dark purple. Customers started reporting bad luck immediately. It took a cleric three hours to cleanse my shop — and she charged me for it.\n\nI don't know what your model is looking at, but it's not looking at the right things. Please fix this before I take my business elsewhere."
+    }
+  ],
+  "itemEdits": {},
+  "customFeatures": [],
+  "model": {
+    "question": "Is this item dangerous?",
+    "labelFeature": null,
+    "labelValue": "",
+    "selectedFeatures": ["element", "usable"],
+    "labels": {
+      "3":  true,  "10": true,  "20": true,  "22": true,  "30": true,  "37": true,
+      "1":  false, "5":  false, "8":  false, "9":  false, "12": false, "13": false,
+      "14": false, "18": false, "23": false, "24": false, "26": false, "27": false,
+      "29": false, "32": false, "35": false, "39": false
+    },
+    "tree": null
+  }
+}

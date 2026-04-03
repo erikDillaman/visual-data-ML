@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "datasetId": "characters",
+  "exploreContext": "An outside contractor built this 'Threat Identifier' to help gate guards spot Foes among travelers. But guards are reporting that some obvious threats are walking right through! The contractor only trained on the most blatant cases — can you find all the Foes the model lets slip by before you rebuild it from scratch?",
+  "exploreGroundTruth": {
+    "215": true, "216": true, "217": true, "218": true, "219": true,
+    "220": true, "221": true, "222": true, "223": true, "224": true,
+    "225": true, "226": true, "227": true
+  },
+  "userStories": [
+    {
+      "id": "cs-1",
+      "from": "Gate Guard Tomás",
+      "avatar": "🚪",
+      "subject": "I let a threat through — the AI said she wasn't a foe",
+      "preview": "The Threat Identifier cleared the Shadow Witch as 'not a foe.' Two hours later, the village elders were reporting hexes...",
+      "body": "I followed the system. That's what I'm supposed to do.\n\nThe Shadow Witch approached my gate. I ran her through the Threat Identifier. It came back clean — not a foe. I let her in.\n\nTwo hours later, I get word from the village elders: three of them woke up cursed. The Shadow Witch was seen near each of their homes.\n\nShe wasn't Aggressive — she was Menacing. Is that distinction in the model? Because it should be. I can't do my job if the tool I'm given doesn't know the difference."
+    },
+    {
+      "id": "cs-2",
+      "from": "Temple Priest Yara",
+      "avatar": "⛪",
+      "subject": "The Cursed Knight passed your checkpoint",
+      "preview": "Undead. Menacing disposition. Strong. How did this not flag as a foe?",
+      "body": "I am writing to file a formal complaint on behalf of the Temple of Light.\n\nA Cursed Knight approached our district checkpoint last week. The Threat Identifier returned a result of 'not a foe.' The guard on duty let it through.\n\nWe had to evacuate the entire temple grounds within the hour. Undead entities — especially those with Menacing dispositions — are always a threat, regardless of their specific aggression type.\n\nYour model appears to only recognize 'Aggressive' characters as foes. That is dangerously incomplete. Please correct this immediately."
+    },
+    {
+      "id": "cs-3",
+      "from": "Innkeeper Marta",
+      "avatar": "🍺",
+      "subject": "Bandit Chief walked through the gate and robbed my inn",
+      "preview": "Your AI said he wasn't a threat. He wasn't Aggressive, technically — but he was absolutely Menacing...",
+      "body": "Your AI cost me three weeks of earnings.\n\nThe Bandit Chief came through the north gate last Tuesday evening. Guards checked him with the Threat Identifier. Not a foe, it said. He walked right in, sat down at my bar, and spent the next two hours casing the place. By midnight, he'd robbed six of my guests while they slept.\n\nHe was Menacing. He was Strong. He was in Forest territory — known bandit country. What does your model need to call him a threat? A sign around his neck?\n\nFix the model. Some threats aren't yelling — they're planning."
+    },
+    {
+      "id": "cs-4",
+      "from": "Village Elder Søren",
+      "avatar": "🧓",
+      "subject": "URGENT — A vampire is living in our village",
+      "preview": "Three villagers have vanished. The Threat Identifier called the Vampire Lord 'not a foe' because he wasn't Aggressive...",
+      "body": "This is an emergency.\n\nThree villagers have gone missing in the past five nights. We believe a Vampire Lord has taken up residence in the old mill.\n\nHe passed through our gate checkpoint four days ago. The Threat Identifier cleared him. Not Aggressive, it said. But he was Menacing — deeply Menacing — and Powerful, and an Undead. Every guard in the kingdom knows Vampire Lords are dangerous.\n\nYour model's definition of 'foe' is too narrow. Menacing entities, especially Undead with high strength, should absolutely be flagged. Please send help — and fix your model."
+    },
+    {
+      "id": "cs-5",
+      "from": "Ruins Explorer Dex",
+      "avatar": "🗺️",
+      "subject": "The Vengeful Spirit wasn't flagged — nearly cost me my life",
+      "preview": "I almost reported the spirit as harmless because your AI did. Menacing spirits in the Ruins are not harmless...",
+      "body": "I explore ruins for a living. I know how to read danger — and I was almost talked out of my instincts by your model.\n\nWhen I scanned the Vengeful Spirit at the Ruins checkpoint, the Threat Identifier said it was not a foe. I almost took that at face value. Then I noticed my compass spinning and thought twice.\n\nI barely escaped. Vengeful Spirits in Ruins territory are textbook threats. Menacing disposition, spiritual energy, hostile home turf. The model doesn't know this because it was only trained on the obvious Aggressive types.\n\nThis model needs more data — and better features."
+    }
+  ],
+  "itemEdits": {},
+  "customFeatures": [],
+  "model": {
+    "question": "Is this character a Foe?",
+    "labelFeature": null,
+    "labelValue": "",
+    "selectedFeatures": ["disposition", "strength"],
+    "labels": {
+      "215": true,  "216": true,  "217": true,  "219": true,
+      "220": true,  "222": true,  "223": true,  "224": true,
+      "201": false, "202": false, "203": false, "204": false,
+      "205": false, "206": false, "207": false, "208": false,
+      "209": false, "211": false, "228": false, "229": false,
+      "232": false, "236": false, "237": false
+    },
+    "tree": null
+  }
+}
