@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "datasetId": "characters",
+  "exploreContext": "You're a junior AI designer at Gridworks, a studio that helps clients fix broken AI systems. Your newest client is Terrashift, a world-building survival game with a huge creature ecosystem. Terrashift's Explorer's Guide is supposed to warn players which creatures are dangerous, but explorers keep getting the wrong advice. The original contractor trained the model on a weak shortcut instead of real signs of danger. Your job is to inspect the old model, spot the pattern, and rebuild it.",
+  "exploreGroundTruth": {
+    "215": true,
+    "216": true,
+    "217": true,
+    "218": true,
+    "219": true,
+    "220": true,
+    "221": true,
+    "222": true,
+    "223": true,
+    "224": true,
+    "225": true,
+    "226": true,
+    "227": true
+  },
+  "userStories": [
+    {
+      "id": "ts-1",
+      "from": "Lead Explorer Suri",
+      "avatar": "🧭",
+      "subject": "Orc Warlord marked safe because he talked first",
+      "preview": "Your guide told our party the Orc Warlord was low risk. He spoke to us, then attacked a minute later...",
+      "body": "We approached the Orc Warlord because the Explorer's Guide treated him like a safe encounter. Why? Because he could speak? He opened with a sentence, then charged us with a battle axe.\n\nIf this system thinks talking means friendly, it is going to get players hurt."
+    },
+    {
+      "id": "ts-2",
+      "from": "Quartermaster Ilya",
+      "avatar": "📦",
+      "subject": "Light Elemental flagged as dangerous for no good reason",
+      "preview": "A harmless Light Elemental was tagged hostile and escorts refused to let it near camp...",
+      "body": "The Guide warned everyone away from a Light Elemental that has never attacked anyone. The only obvious thing about it is that it doesn't speak.\n\nWe're losing good NPC interactions because the model seems suspicious of silent creatures by default."
+    },
+    {
+      "id": "ts-3",
+      "from": "Scout Ren",
+      "avatar": "🏹",
+      "subject": "Shadow Witch listed as safe encounter",
+      "preview": "The Shadow Witch was marked safe to approach. She definitely was not safe...",
+      "body": "I checked the Explorer's Guide before entering the ruins. It rated the Shadow Witch as safe to approach. She spoke, smiled, and then hit our team with curses.\n\nThe model is trusting the wrong feature. Fast."
+    },
+    {
+      "id": "ts-4",
+      "from": "Stable Keeper Nema",
+      "avatar": "🐾",
+      "subject": "Snow Fox treated like a threat",
+      "preview": "The Guide keeps warning players about the Snow Fox even though it's one of the gentlest creatures in the region...",
+      "body": "Players now avoid the Snow Fox because the Explorer's Guide labels it dangerous. It's shy, silent, and harmless.\n\nSomething in this model is punishing creatures for not speaking, and that bias is wrecking the guide."
+    }
+  ],
+  "itemEdits": {},
+  "customFeatures": [],
+  "model": {
+    "question": "Is this creature dangerous?",
+    "labelFeature": null,
+    "labelValue": "",
+    "selectedFeatures": ["speaks"],
+    "labels": {
+      "201": false,
+      "203": false,
+      "206": false,
+      "209": false,
+      "213": false,
+      "217": false,
+      "218": false,
+      "221": false,
+      "225": false,
+      "227": false,
+      "231": false,
+      "240": false,
+      "208": true,
+      "211": true,
+      "212": true,
+      "214": true,
+      "216": true,
+      "219": true,
+      "222": true,
+      "223": true,
+      "228": true,
+      "232": true,
+      "236": true,
+      "239": true
+    },
+    "tree": null
+  }
+}
